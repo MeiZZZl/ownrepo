@@ -77,6 +77,31 @@ for(k in 1:length(levels(data$Type))){
   print(sum(data$Profit[which(data$Type == levels(data$Type)[k])]))
 }
 
+#[1] "Baby Food"
+#[1] 2643089976
+#[1] "Beverages"
+#[1] 424707312
+#[1] "Cereal"
+#[1] 2449797431
+#[1] "Clothes"
+#[1] 2031387120
+#[1] "Cosmetics"
+#[1] 4769889247
+#[1] "Fruits"
+#[1] 64400917
+#[1] "Household"
+#[1] 4509149025
+#[1] "Meat"
+#[1] 1536590770
+#[1] "Office Supplies"
+#[1] 3532852109
+#[1] "Personal Care"
+#[1] 677622901
+#[1] "Snacks"
+#[1] 1518303059
+#[1] "Vegetables"
+#[1] 1690386683
+
 #### creating a Total Profit by Item Type for visual ease.
 profit.by.type.dataframe<-data.frame(c(levels(data$Type)), profit.by.type)
 #### Cosmetics brought in the most profit.
