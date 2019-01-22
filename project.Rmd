@@ -1,0 +1,181 @@
+---
+output: html_document
+editor_options: 
+  chunk_output_type: console
+---
+```{r}
+library(readxl)
+dataset <- read_excel("~/Desktop/dataset.xls")
+View(dataset)                                                                                           
+summary(dataset)
+data<-dataset
+View(data)
+library(dplyr)
+library(reshape2)
+library(tidyverse)
+library(ggplot2)
+
+#### change col 1:5 into factors:
+for (i in 1:5) {
+    data[[i]]<-factor(data[[i]])
+    print(colnames(data[i]))
+    print(summary(data[[i]]))
+    cat("\n\n")
+}
+
+# [1] "Region"
+#                              Asia             Australia and Oceania 
+#                              9497                              5316 
+# Central America and the Caribbean                            Europe 
+#                              7058                             16855 
+#      Middle East and North Africa                     North America 
+#                              8250                              1400 
+#                Sub-Saharan Africa 
+#                             17159 
+# [1] "Country"
+#                            Sudan                    Cote d Ivoire 
+#                              403                              398 
+#                      New Zealand                           Rwanda 
+#                              397                              397 
+#                            Yemen                            Syria 
+# ...
+#                             Oman                          (Other) 
+#                              352                            29118 
+# [1] "Item Type"
+#       Baby Food       Beverages          Cereal         Clothes       Cosmetics 
+#            5537            5400            5488            5500            5524 
+#          Fruits       Household            Meat Office Supplies   Personal Care 
+#            5399            5435            5357            5561            5443 
+#          Snacks      Vegetables 
+#            5495            5396 
+# [1] "Sales Channel"
+# Offline  Online 
+#   32861   32674 
+# 
+# [1] "Order Priority"
+#     C     H     L     M 
+# 16346 16399 16434 16356 
+colnames(data)
+#  [1] "Region"         "Country"        "Item Type"      "Sales Channel"  "Order Priority"
+#  [6] "Order Date"     "Order ID"       "Ship Date"      "Units Sold"     "Unit Price"    
+# [11] "Unit Cost"      "Total Revenue"  "Total Cost"     "Total Profit"  
+colnames(data) <-(c("Region", "Country", "Type", "Channel", "Priority", "Date", "ID", "ShippingDate", "UnitsSold", "Price", "UnitCost", "Revenue", "Cost", "Profit"))
+
+data$ID<-NULL
+data$ShippingDate<-NULL
+
+#### which item type brings in most profit?
+profit.by.type<- NULL
+
+#### following loop sums the total profit under each Item Type
+for(k in 1:length(levels(data$Type))){
+  print(levels(data$Type)[k])
+  
+  which(data$Type == levels(data$Type)[k])
+  profit.by.type[k]=sum(data$Profit[which(data$Type == levels(data$Type)[k])])
+  print(sum(data$Profit[which(data$Type == levels(data$Type)[k])]))
+}
+
+#### creating a Total Profit by Item Type for visual ease.
+profit.by.type.dataframe<-data.frame(c(levels(data$Type)), profit.by.type)
+#### Cosmetics brought in the most profit.
+
+#### above section codes can be replicated for different columns of factor class,
+#### say Region column., to see which Region brings in the most Profit.  
+#### won't replicate here.
+
+#### turning above into picture:
+ggplot(profit.by.type.dataframe, aes(x=profit.by.type.dataframe$c.levels.data.Type., 
+                                     y=profit.by.type.dataframe$profit.by.type))+geom_col()+
+  xlab("Item Types")+ylab("Profit of Each Item Type")
+#### plot saved into pdf
+#### end
+
+#### want to see if profit of products purchased Online vs. Offlince
+#### t.test(y~x) # where y is numeric and x is a binary factor
+t.test(data$Profit~data$Channel)
+# 
+# 	Welch Two Sample t-test
+# 
+# data:  data$Profit by data$Channel
+# t = 1.0572, df = 65532, p-value = 0.2904
+# alternative hypothesis: true difference in means is not equal to 0
+# 95 percent confidence interval:
+#  -2674.074  8937.225
+# sample estimates:
+# mean in group Offline  mean in group Online 
+#              395979.2              392847.6 
+#### p>0.05, not significant
+#### not much difference in profit between online vs. offline purchase within 2010-2017
+  
+
+#### below is plotting of Y=profit, X=UnitsSold, by Item Types
+ ggplot(data) +
+  geom_jitter(aes(Profit,UnitsSold, colour=Type),) + geom_smooth(aes(Profit,UnitsSold, colour=Type), method=lm, se=FALSE) +
+  facet_wrap(~Type) +
+  labs(x = "Units Sold", y = "Profit")
+#### the slopes are perfect looking because their unit prices are set the same...
+
+ 
+#### Regression Line
+#### y <- aX1+b
+lm.results <- lm(UnitsSold ~ Profit, data=data)
+# lm(formula, data, subset, weights, ...)
+# formula: model description, such as x ~ y
+lm.results
+# Call:
+# lm(formula = UnitsSold ~ Profit, data = data)
+# 
+# Coefficients:
+# (Intercept)       Profit  
+#   3.192e+03    4.579e-03  
+ggplot(data, aes(x=UnitsSold, y=Profit)) + geom_point(color='orange') + 
+   geom_smooth(method='lm')+
+  ggtitle("Regression: Profit by UnitsSold")
+
+
+#### creating a dataframe where only Cosmetics ItemType are included
+cosmetic.df <- data[which(data$Type=="Cosmetics"),]
+#### taking a general look:
+summary(cosmetic.df)
+ #                               Region                     Country            Type     
+ # Asia                             : 811   Guatemala           :  44   Cosmetics:5524  
+ # Australia and Oceania            : 452   Seychelles          :  44   Baby Food:   0  
+ # ...  
+ # Median :263.3   Median :2166763   Median :1305063.5   Median : 861699.7  
+ # Mean   :263.3   Mean   :2171251   Mean   :1307766.8   Mean   : 863484.7  
+ # 3rd Qu.:263.3   3rd Qu.:3236482   3rd Qu.:1949366.2   3rd Qu.:1287116.1  
+ # Max.   :263.3   Max.   :4372000   Max.   :2633300.0   Max.   :1738700.0  
+
+#### we can go into detailed analysis with many subsets like this, using same codes above.
+
+
+#### before diving into endless possibilities, we can take a look at different data spreads
+#### using self-created interactive spready() function:
+spready <- function(){
+  answer <- readline("Would you like to spread data? (y or n) ")
+  if(answer=="y")  {  x <- readline("What is the column name of x? (a factored column) ")
+                      y <- readline("What is the column name of y?(y should be numerical) ")
+                      sspread<-spread(data, x, y)
+                      View(sspread)
+                      return(sspread)
+                    }
+                      
+  if(answer=="n")  {print("Bye now.")}
+  else {print("Entry not recognized.")}
+}
+
+spready()
+# just to take a look
+
+a <- spready() 
+# if you want to store the spread
+
+b <- spready() 
+# store a different spread
+
+
+#### END
+#### THANK YOU PROFESSOR JACKSON!! I LEARNT A LOT FROM THIS CLASS!!
+#### WISH YOU THE BESTS!!
+```
